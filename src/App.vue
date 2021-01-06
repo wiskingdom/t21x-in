@@ -14,22 +14,55 @@
       </q-toolbar>
       -->
       <q-tabs align="left" class="padding">
-        <span style="width:140px;display:inline-block;"
-          >최종분류: {{ mark }}</span
+        <span class="text-grey-9" style="width:140px;display:inline-block;"
+          ><strong>최종분류: {{ mark }}</strong></span
         >
-        <span>자동분류: {{ preMark }}</span>
-        <q-space />
-        <q-route-tab to="/page3" label="Page Three" />
+        <span class="text-grey-9" style="width:140px;display:inline-block;"
+          >자동분류: {{ preMark }}</span
+        >
+        <q-btn
+          class="text-bold"
+          color="green-8"
+          unelevated
+          label="기사검색"
+          style="margin-left: 10px"
+          @click="externPop()"
+        />
+      </q-tabs>
+      <q-tabs align="left" class="text-grey-9 padding">
+        <q-markup-table flat bordered>
+          <thead>
+            <tr>
+              <th class="text-left">날짜</th>
+              <th class="text-left">면종</th>
+              <th class="text-left">페이지</th>
+              <th class="text-left">중복ID</th>
+              <th class="text-left">단어수</th>
+              <th class="text-left">주제</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left">{{ record.DateLine }}</td>
+              <td class="text-left">{{ record.PageType }}</td>
+              <td class="text-left">{{ record.PrintingPage }}</td>
+              <td class="text-left">{{ record.Dup }}</td>
+              <td class="text-left">{{ record.WordCount }}</td>
+              <td class="text-left">{{ record.SubjectCode }}</td>
+            </tr>
+          </tbody>
+        </q-markup-table>
+        <br />
+      </q-tabs>
+      <q-tabs align="left" class="text-grey-9 padding">
+        <p>
+          <strong>제목: {{ record.HeadLine }}</strong>
+        </p>
       </q-tabs>
     </q-header>
 
     <q-page-container>
       <div id="app">
-        <div class="record-headline">
-          <div class="padding">
-            <p>{{ record.HeadLine }}</p>
-          </div>
-        </div>
         <div class="padding">
           <p>{{ address }}</p>
           <p>{{ rowAddress }}</p>
@@ -53,8 +86,8 @@ export default {
   name: "App",
   data() {
     return {
-      address: "init",
-      rowAddress: "init",
+      address: "A1",
+      rowAddress: "1",
       record: {}
     };
   },
@@ -75,10 +108,16 @@ export default {
       this.rowAddress = this.getRowAddress(newAddress);
     },
     rowAddress(newAddress) {
-      this.getValues(newAddress);
+      newAddress === "1" || this.getValues(newAddress);
     }
   },
   methods: {
+    externPop() {
+      const link = this.record.SearchLink;
+      const linkUri = encodeURI(link);
+      window.open(linkUri, "popup");
+      return false;
+    },
     getRowAddress(address) {
       return address.match(/\d+/)[0];
     },
@@ -89,7 +128,7 @@ export default {
         await context.sync();
       });
     },
-    connect() {
+    bindX() {
       this.tryCatch(this.registerEventHandlers);
     },
     async tryCatch(callback) {
@@ -163,10 +202,32 @@ export default {
           WordCount
         };
       });
+    },
+    markValidate() {
+      this.tryCatch(this.requireApprovedTag);
+    },
+    async requireApprovedTag() {
+      await window.Excel.run(async context => {
+        const sheet = context.workbook.worksheets.getItem("data");
+        const markRange = sheet.getRange("N:N");
+
+        markRange.dataValidation.clear();
+
+        let approvedListRule = {
+          list: {
+            inCellDropDown: true,
+            source: "p,n,s"
+          }
+        };
+        markRange.dataValidation.rule = approvedListRule;
+
+        await context.sync();
+      });
     }
   },
   created() {
-    this.connect();
+    this.bindX();
+    this.markValidate();
   }
 };
 </script>
