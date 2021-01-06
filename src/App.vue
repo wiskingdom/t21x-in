@@ -64,8 +64,6 @@
     <q-page-container>
       <div id="app">
         <div class="padding">
-          <p>{{ address }}</p>
-          <p>{{ rowAddress }}</p>
           <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
             {{ item }}
           </p>
@@ -121,8 +119,10 @@ export default {
     address(newAddress) {
       this.rowAddress = this.getRowAddress(newAddress);
     },
-    rowAddress(newAddress) {
+    rowAddress(newAddress, oldAddress) {
       newAddress === "1" || this.getValues(newAddress);
+      this.setRowColor(newAddress, "yellow");
+      this.setRowColor(oldAddress, null);
     }
   },
   methods: {
@@ -135,10 +135,16 @@ export default {
     getRowAddress(address) {
       return address.match(/\d+/)[0];
     },
-    onSetColor() {
+    setRowColor(rowAddress, color) {
       window.Excel.run(async context => {
-        const range = context.workbook.getSelectedRange();
-        range.format.fill.color = "green";
+        const sheet = context.workbook.worksheets.getItem("data");
+        const rowRange = sheet.getRange(`A${rowAddress}:Q${rowAddress}`);
+        if (color) {
+          rowRange.format.fill.color = color;
+        } else {
+          rowRange.format.fill.clear();
+        }
+
         await context.sync();
       });
     },
