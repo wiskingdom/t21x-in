@@ -33,20 +33,23 @@
         <q-markup-table flat bordered>
           <thead>
             <tr>
+              <th class="text-left">ID</th>
+              <th class="text-left">중복ID</th>
               <th class="text-left">날짜</th>
               <th class="text-left">면종</th>
               <th class="text-left">페이지</th>
-              <th class="text-left">중복ID</th>
               <th class="text-left">단어수</th>
               <th class="text-left">주제</th>
             </tr>
           </thead>
           <tbody>
             <tr>
+              <td class="text-left">{{ record.ID }}</td>
+              <td class="text-left">{{ record.Dup }}</td>
               <td class="text-left">{{ record.DateLine }}</td>
               <td class="text-left">{{ record.PageType }}</td>
               <td class="text-left">{{ record.PrintingPage }}</td>
-              <td class="text-left">{{ record.Dup }}</td>
+
               <td class="text-left">{{ record.WordCount }}</td>
               <td class="text-left">{{ record.SubjectCode }}</td>
             </tr>
