@@ -14,11 +14,11 @@
       </q-toolbar>
       -->
       <q-tabs align="left" class="padding">
-        <span class="text-grey-9" style="width:140px;display:inline-block;"
-          ><strong>최종분류: {{ mark }}</strong></span
+        <span style="width:140px;display:inline-block;" :class="markColor"
+          ><strong>최종분류: {{ markKor }}</strong></span
         >
-        <span class="text-grey-9" style="width:140px;display:inline-block;"
-          >자동분류: {{ preMark }}</span
+        <span style="width:140px;display:inline-block;" :class="preMarkColor"
+          >자동분류: {{ preMarkKor }}</span
         >
         <q-btn
           class="text-bold"
@@ -82,6 +82,12 @@ const markMap = {
   s: "사설",
   d: "중복기사"
 };
+const markColorMap = {
+  p: "text-deep-purple-9",
+  n: "text-blue-grey-9",
+  s: "text-amber-10",
+  d: "text-red-9"
+};
 export default {
   name: "App",
   data() {
@@ -92,12 +98,20 @@ export default {
     };
   },
   computed: {
-    preMark() {
+    preMarkKor() {
       return markMap[this.record.PreMark] || "";
     },
-    mark() {
+    markKor() {
       const finalMark = this.record.Mark || this.record.PreMark;
       return markMap[finalMark] || "";
+    },
+    preMarkColor() {
+      return markColorMap[this.record.PreMark] || "text-grey-9";
+    },
+    markColor() {
+      return this.record.Mark
+        ? markColorMap[this.record.Mark]
+        : markColorMap[this.record.PreMark];
     },
     newsPs() {
       return this.record.NewsText ? this.record.NewsText.split(/<LFCR>/) : [];
