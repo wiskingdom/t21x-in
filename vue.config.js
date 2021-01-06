@@ -15,5 +15,14 @@ module.exports = {
     ca: fs.readFileSync(
       path.resolve(`${homedir}/.office-addin-dev-certs/ca.crt`)
     )
-  }
+  },
+
+  pluginOptions: {
+    quasar: {
+      importStrategy: "kebab",
+      rtlSupport: false
+    }
+  },
+
+  transpileDependencies: ["quasar"]
 };

@@ -1,28 +1,45 @@
 <template>
-  <div id="app">
-    <div class="record-meta">
-      <div class="padding">
-        <table>
-          <tr>
-            <td style="width:150px;">
-              <strong>최종분류: {{ mark }}</strong>
-            </td>
-            <td>자동분류: {{ preMark }}</td>
-          </tr>
-        </table>
+  <q-layout view="hHh lpR fFf">
+    <q-header bordered class="bg-grey-2 text-primary" height-hint="98">
+      <!--
+      <q-toolbar>
+        
+        <q-toolbar-title>
+          <q-avatar>
+            <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg" />
+          </q-avatar>
+          Title
+        </q-toolbar-title>
+        
+      </q-toolbar>
+      -->
+      <q-tabs align="left" class="padding">
+        <span style="width:140px;display:inline-block;"
+          >최종분류: {{ mark }}</span
+        >
+        <span>자동분류: {{ preMark }}</span>
+        <q-space />
+        <q-route-tab to="/page3" label="Page Three" />
+      </q-tabs>
+    </q-header>
+
+    <q-page-container>
+      <div id="app">
+        <div class="record-headline">
+          <div class="padding">
+            <p>{{ record.HeadLine }}</p>
+          </div>
+        </div>
+        <div class="padding">
+          <p>{{ address }}</p>
+          <p>{{ rowAddress }}</p>
+          <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
+            {{ item }}
+          </p>
+        </div>
       </div>
-    </div>
-    <div class="record-headline">
-      <div class="padding">
-        <p>{{ record.HeadLine }}</p>
-      </div>
-    </div>
-    <div class="record-text">
-      <p>{{ address }}</p>
-      <p>{{ rowAddress }}</p>
-      <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">{{ item }}</p>
-    </div>
-  </div>
+    </q-page-container>
+  </q-layout>
 </template>
 
 <script>
@@ -155,43 +172,7 @@ export default {
 </script>
 
 <style>
-.record-meta {
-  background: #d1e3f0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  bottom: 0;
-  padding: 10px;
-  font-size: 14px;
-  overflow: auto;
-}
-.record-headline {
-  background: #d1e3f0;
-  position: fixed;
-  top: 70px;
-  left: 0;
-  right: 0;
-  height: 80px;
-  bottom: 0;
-  padding: 10px;
-  font-size: 14px;
-  overflow: auto;
-}
-
-.record-text {
-  background: #fff;
-  position: fixed;
-  top: 160px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 10px;
-  font-size: 14px;
-  overflow: auto;
-}
 .padding {
-  padding: 0px 10px;
+  padding: 10px;
 }
 </style>
