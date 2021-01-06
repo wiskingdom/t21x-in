@@ -136,7 +136,7 @@ export default {
       return false;
     },
     getRowAddress(address) {
-      return address.match(/\d+/)[0];
+      return address.match(/\d+/g).reverse()[0];
     },
     setRowColor(rowAddress, color) {
       window.Excel.run(async context => {
