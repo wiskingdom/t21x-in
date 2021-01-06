@@ -67,6 +67,7 @@
     <q-page-container>
       <div id="app">
         <div class="padding">
+          <p>{{ log }}</p>
           <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
             {{ item }}
           </p>
@@ -95,7 +96,8 @@ export default {
     return {
       address: "A1",
       rowAddress: "1",
-      record: {}
+      record: {},
+      log: ""
     };
   },
   computed: {
@@ -120,12 +122,22 @@ export default {
   },
   watch: {
     address(newAddress) {
-      this.rowAddress = this.getRowAddress(newAddress);
+      const rowAddresses = this.getRowAddresses(newAddress);
+      const colAddresses = this.getColAddresses(newAddress);
+      this.rowAddress = rowAddresses.reverse()[0];
+
+      rowAddresses.length === 1 &&
+        this.setRowColor(rowAddresses.reverse()[0], "yellow");
+      if (colAddresses.length === 1 && colAddresses[0] === "N") {
+        this.unprotectDataSheet();
+      } else {
+        this.protectDataSheet();
+      }
     },
     rowAddress(newAddress, oldAddress) {
       newAddress === "1" || this.getValues(newAddress);
-      this.setRowColor(newAddress, "yellow");
       this.setRowColor(oldAddress, null);
+      this.log = oldAddress;
     }
   },
   methods: {
@@ -135,8 +147,11 @@ export default {
       window.open(linkUri, "popup");
       return false;
     },
-    getRowAddress(address) {
-      return address.match(/\d+/g).reverse()[0];
+    getRowAddresses(address) {
+      return address.match(/\d+/g);
+    },
+    getColAddresses(address) {
+      return address.match(/[A-Z]+/g);
     },
     setRowColor(rowAddress, color) {
       window.Excel.run(async context => {
@@ -245,6 +260,30 @@ export default {
         markRange.dataValidation.rule = approvedListRule;
 
         await context.sync();
+      });
+    },
+    async protectDataSheet() {
+      await window.Excel.run(async context => {
+        const sheet = context.workbook.worksheets.getItem("data");
+        sheet.load("protection/protected");
+
+        await context.sync();
+
+        if (!sheet.protection.protected) {
+          const option = {
+            allowAutoFilter: true,
+            allowFormatRows: true,
+            allowFormatCells: true,
+            allowFormatColumns: true
+          };
+          sheet.protection.protect(option, "123qwe");
+        }
+      });
+    },
+    async unprotectDataSheet() {
+      await window.Excel.run(async context => {
+        const sheet = context.workbook.worksheets.getItem("data");
+        sheet.protection.unprotect("123qwe");
       });
     }
   },
