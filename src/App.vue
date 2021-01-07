@@ -67,7 +67,8 @@
     <q-page-container>
       <div id="app">
         <div class="padding">
-          <p>{{ log }}</p>
+          <p>{{ address }}</p>
+          <p>{{ changeValueAddress }}</p>
           <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
             {{ item }}
           </p>
@@ -96,7 +97,9 @@ export default {
     return {
       address: "A1",
       rowAddress: "1",
+      colAddress: "A",
       record: {},
+      changeValueAddress: {},
       log: ""
     };
   },
@@ -125,13 +128,14 @@ export default {
       const rowAddresses = this.getRowAddresses(newAddress);
       const colAddresses = this.getColAddresses(newAddress);
       this.rowAddress = rowAddresses.reverse()[0];
+      this.colAddress = colAddresses[0];
 
       rowAddresses.length === 1 &&
         this.setRowColor(rowAddresses.reverse()[0], "yellow");
-      if (colAddresses.length === 1 && colAddresses[0] === "N") {
-        this.unprotectDataSheet();
-      } else {
+      if (colAddresses.some(item => item !== "N")) {
         this.protectDataSheet();
+      } else {
+        this.unprotectDataSheet();
       }
     },
     rowAddress(newAddress, oldAddress) {
@@ -178,9 +182,9 @@ export default {
     },
     async registerEventHandlers() {
       await window.Excel.run(async context => {
-        let sheet = context.workbook.worksheets.getItem("data");
+        const sheet = context.workbook.worksheets.getItem("data");
         sheet.onSelectionChanged.add(this.onWorksheetSelectionChange);
-
+        sheet.onChanged.add(this.onValueChange);
         await context.sync();
       });
     },
@@ -190,6 +194,13 @@ export default {
         await context.sync();
       });
     },
+    async onValueChange(args) {
+      await window.Excel.run(async context => {
+        this.changeValueAddress = args.address;
+        await context.sync();
+      });
+    },
+
     updateAddress(payload) {
       this.address = payload;
     },
@@ -276,14 +287,14 @@ export default {
             allowFormatCells: true,
             allowFormatColumns: true
           };
-          sheet.protection.protect(option, "123qwe");
+          sheet.protection.protect(option);
         }
       });
     },
     async unprotectDataSheet() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
-        sheet.protection.unprotect("123qwe");
+        sheet.protection.unprotect();
       });
     }
   },
