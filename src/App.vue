@@ -14,8 +14,11 @@
       </q-toolbar>
       -->
       <q-tabs align="left" class="padding">
-        <span style="width:140px;display:inline-block;" :class="markColor"
-          ><strong>최종분류: {{ markKor }}</strong></span
+        <span
+          style="width:160px;display:inline-block;"
+          class="text-subtitle1"
+          :class="markColor"
+          ><strong>작업자분류: {{ markKor }}</strong></span
         >
         <span style="width:140px;display:inline-block;" :class="preMarkColor"
           >자동분류: {{ preMarkKor }}</span
@@ -57,7 +60,7 @@
         </q-markup-table>
         <br />
       </q-tabs>
-      <q-tabs align="left" class="text-grey-9 padding">
+      <q-tabs align="left" class="text-grey-9 text-subtitle1 padding">
         <p>
           <strong>제목: {{ record.HeadLine }}</strong>
         </p>
@@ -67,8 +70,6 @@
     <q-page-container>
       <div id="app">
         <div class="padding">
-          <p>{{ address }}</p>
-          <p>{{ changeValueAddress }}</p>
           <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
             {{ item }}
           </p>
@@ -80,16 +81,18 @@
 
 <script>
 const markMap = {
-  p: "일반기사",
+  y: "일반기사",
   n: "비기사",
-  s: "사설",
-  d: "중복기사"
+  e: "사설",
+  d: "중복기사",
+  z: "보류"
 };
 const markColorMap = {
-  p: "text-deep-purple-9",
-  n: "text-blue-grey-9",
-  s: "text-amber-10",
-  d: "text-red-9"
+  y: "text-primary",
+  n: "text-orange-10",
+  e: "text-accent",
+  d: "text-negative",
+  z: "text-amber-10"
 };
 export default {
   name: "App",
@@ -99,7 +102,6 @@ export default {
       rowAddress: "1",
       colAddress: "A",
       record: {},
-      changeValueAddress: {},
       log: ""
     };
   },
@@ -108,16 +110,13 @@ export default {
       return markMap[this.record.PreMark] || "";
     },
     markKor() {
-      const finalMark = this.record.Mark || this.record.PreMark;
-      return markMap[finalMark] || "";
+      return markMap[this.record.Mark] || "미분류";
     },
     preMarkColor() {
       return markColorMap[this.record.PreMark] || "text-grey-9";
     },
     markColor() {
-      return this.record.Mark
-        ? markColorMap[this.record.Mark]
-        : markColorMap[this.record.PreMark];
+      return markColorMap[this.record.Mark] || "text-grey-9";
     },
     newsPs() {
       return this.record.NewsText ? this.record.NewsText.split(/<LFCR>/) : [];
@@ -132,10 +131,10 @@ export default {
 
       rowAddresses.length === 1 &&
         this.setRowColor(rowAddresses.reverse()[0], "yellow");
-      if (colAddresses.some(item => item !== "N")) {
-        this.protectDataSheet();
-      } else {
+      if (colAddresses.every(item => item === "K")) {
         this.unprotectDataSheet();
+      } else {
+        this.protectDataSheet();
       }
     },
     rowAddress(newAddress, oldAddress) {
@@ -146,7 +145,10 @@ export default {
   },
   methods: {
     externPop() {
-      const link = this.record.SearchLink;
+      const link = this.record.SearchLink.replace(/CRLF\+/g, "").replace(
+        /\+/g,
+        " "
+      );
       const linkUri = encodeURI(link);
       window.open(linkUri, "popup");
       return false;
@@ -184,7 +186,7 @@ export default {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
         sheet.onSelectionChanged.add(this.onWorksheetSelectionChange);
-        sheet.onChanged.add(this.onValueChange);
+        //sheet.onChanged.add(this.onValueChange);
         await context.sync();
       });
     },
@@ -194,12 +196,14 @@ export default {
         await context.sync();
       });
     },
+    /*
     async onValueChange(args) {
       await window.Excel.run(async context => {
         this.changeValueAddress = args.address;
         await context.sync();
       });
     },
+    */
 
     updateAddress(payload) {
       this.address = payload;
@@ -222,11 +226,11 @@ export default {
           T21Class,
           DateLine,
           PreMark,
+          Dup,
+          Mark,
           HeadLine,
           SubHeadLine,
           ByLine,
-          Dup,
-          Mark,
           NewsText,
           SearchLink,
           WordCount
@@ -241,11 +245,11 @@ export default {
           T21Class,
           DateLine,
           PreMark,
+          Dup,
+          Mark,
           HeadLine,
           SubHeadLine,
           ByLine,
-          Dup,
-          Mark,
           NewsText,
           SearchLink,
           WordCount
@@ -258,14 +262,14 @@ export default {
     async requireApprovedTag() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
-        const markRange = sheet.getRange("N:N");
+        const markRange = sheet.getRange("K:K");
 
         markRange.dataValidation.clear();
 
         let approvedListRule = {
           list: {
             inCellDropDown: true,
-            source: "p,n,s"
+            source: "y,n,e,z"
           }
         };
         markRange.dataValidation.rule = approvedListRule;
