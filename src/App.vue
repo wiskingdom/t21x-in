@@ -112,10 +112,7 @@ export default {
       event: {},
       address: "A1",
       rowAddress: "1",
-      colAddress: "A",
-      usedRange: "A1",
-      record: {},
-      log: ""
+      record: {}
     };
   },
   computed: {
@@ -138,24 +135,10 @@ export default {
   watch: {
     address(newAddress) {
       const rowAddresses = this.getRowAddresses(newAddress);
-      const colAddresses = this.getColAddresses(newAddress);
       this.rowAddress = rowAddresses.reverse()[0];
-      this.colAddress = colAddresses[0];
-
-      rowAddresses.length === 1 && this.setRowColor(this.rowAddress, "yellow");
-      setTimeout(this.setRowColor, 1500, this.rowAddress, null);
-      /* // 실행취소 안됨
-      if (colAddresses.every(item => item === "K")) {
-        this.unprotectDataSheet();
-      } else {
-        this.protectDataSheet();
-      }
-      */
     },
-    rowAddress(newAddress, oldAddress) {
+    rowAddress(newAddress) {
       newAddress === "1" || this.getValues(newAddress);
-      // this.setRowColor(oldAddress, null);
-      this.log = oldAddress;
     }
   },
   methods: {
@@ -171,9 +154,6 @@ export default {
     },
     getRowAddresses(address) {
       return address.match(/\d+/g);
-    },
-    getColAddresses(address) {
-      return address.match(/[A-Z]+/g);
     },
 
     async getValues(rowAddress) {
