@@ -1,18 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
     <q-header bordered class="bg-grey-2 text-primary" height-hint="98">
-      <!--
-      <q-toolbar>
-        
-        <q-toolbar-title>
-          <q-avatar>
-            <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg" />
-          </q-avatar>
-          Title
-        </q-toolbar-title>
-        
-      </q-toolbar>
-      -->
       <q-tabs align="left" class="padding">
         <span
           style="width:160px;display:inline-block;"
