@@ -21,15 +21,23 @@
           ><strong>작업자분류: {{ markKor }}</strong></span
         >
         <span style="width:140px;display:inline-block;" :class="preMarkColor"
-          >자동분류: {{ preMarkKor }}</span
+          >추정분류: {{ preMarkKor }}</span
         >
         <q-btn
-          class="text-bold"
+          class="text-bold text-caption"
           color="green-8"
           unelevated
-          label="기사검색"
+          label="기사검색(제)"
           style="margin-left: 10px"
-          @click="externPop()"
+          @click="externPop('headLine')"
+        />
+        <q-btn
+          class="text-bold text-caption"
+          color="green-8"
+          unelevated
+          label="기사검색(본)"
+          style="margin-left: 10px"
+          @click="externPop('text')"
         />
       </q-tabs>
       <q-tabs align="left" class="text-grey-9 padding">
@@ -39,6 +47,7 @@
               <th class="text-left">ID</th>
               <th class="text-left">중복ID</th>
               <th class="text-left">날짜</th>
+              <th class="text-left">작성자</th>
               <th class="text-left">면종</th>
               <th class="text-left">페이지</th>
               <th class="text-left">단어수</th>
@@ -50,6 +59,7 @@
               <td class="text-left">{{ record.ID }}</td>
               <td class="text-left">{{ record.Dup }}</td>
               <td class="text-left">{{ record.DateLine }}</td>
+              <td class="text-left">{{ record.ByLine }}</td>
               <td class="text-left">{{ record.PageType }}</td>
               <td class="text-left">{{ record.PrintingPage }}</td>
 
@@ -70,6 +80,7 @@
     <q-page-container>
       <div id="app">
         <div class="padding">
+          <p>{{ address }}</p>
           <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
             {{ item }}
           </p>
@@ -98,9 +109,11 @@ export default {
   name: "App",
   data() {
     return {
+      event: {},
       address: "A1",
       rowAddress: "1",
       colAddress: "A",
+      usedRange: "A1",
       record: {},
       log: ""
     };
@@ -129,26 +142,29 @@ export default {
       this.rowAddress = rowAddresses.reverse()[0];
       this.colAddress = colAddresses[0];
 
-      rowAddresses.length === 1 &&
-        this.setRowColor(rowAddresses.reverse()[0], "yellow");
+      rowAddresses.length === 1 && this.setRowColor(this.rowAddress, "yellow");
+      setTimeout(this.setRowColor, 1500, this.rowAddress, null);
+      /* // 실행취소 안됨
       if (colAddresses.every(item => item === "K")) {
         this.unprotectDataSheet();
       } else {
         this.protectDataSheet();
       }
+      */
     },
     rowAddress(newAddress, oldAddress) {
       newAddress === "1" || this.getValues(newAddress);
-      this.setRowColor(oldAddress, null);
+      // this.setRowColor(oldAddress, null);
       this.log = oldAddress;
     }
   },
   methods: {
-    externPop() {
-      const link = this.record.SearchLink.replace(/CRLF\+/g, "").replace(
-        /\+/g,
-        " "
-      );
+    externPop(mode) {
+      const linkPre = this.record.SearchLink.match(/^.+query=/)[0];
+      const link =
+        mode === "headLine"
+          ? linkPre + this.record.HeadLine.replace(/[^가-힣\w]+/g, " ")
+          : this.record.SearchLink.replace(/CRLF|LFCR/g, "");
       const linkUri = encodeURI(link);
       window.open(linkUri, "popup");
       return false;
@@ -159,55 +175,7 @@ export default {
     getColAddresses(address) {
       return address.match(/[A-Z]+/g);
     },
-    setRowColor(rowAddress, color) {
-      window.Excel.run(async context => {
-        const sheet = context.workbook.worksheets.getItem("data");
-        const rowRange = sheet.getRange(`A${rowAddress}:Q${rowAddress}`);
-        if (color) {
-          rowRange.format.fill.color = color;
-        } else {
-          rowRange.format.fill.clear();
-        }
 
-        await context.sync();
-      });
-    },
-    bindX() {
-      this.tryCatch(this.registerEventHandlers);
-    },
-    async tryCatch(callback) {
-      try {
-        await callback();
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    async registerEventHandlers() {
-      await window.Excel.run(async context => {
-        const sheet = context.workbook.worksheets.getItem("data");
-        sheet.onSelectionChanged.add(this.onWorksheetSelectionChange);
-        //sheet.onChanged.add(this.onValueChange);
-        await context.sync();
-      });
-    },
-    async onWorksheetSelectionChange(args) {
-      await window.Excel.run(async context => {
-        this.updateAddress(args.address);
-        await context.sync();
-      });
-    },
-    /*
-    async onValueChange(args) {
-      await window.Excel.run(async context => {
-        this.changeValueAddress = args.address;
-        await context.sync();
-      });
-    },
-    */
-
-    updateAddress(payload) {
-      this.address = payload;
-    },
     async getValues(rowAddress) {
       const allRowRange = `A${rowAddress}:S${rowAddress}`; // 레코드 열 범위
       await window.Excel.run(async context => {
@@ -256,15 +224,37 @@ export default {
         };
       });
     },
-    markValidate() {
-      this.tryCatch(this.requireApprovedTag);
+    /* initializer */
+    async tryCatch(callback) {
+      try {
+        await callback();
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async registerEventHandlers() {
+      await window.Excel.run(async context => {
+        const sheet = context.workbook.worksheets.getItem("data");
+        this.event = sheet.onSelectionChanged.add(
+          this.onWorksheetSelectionChange
+        );
+        await context.sync();
+      });
+    },
+    async onWorksheetSelectionChange(args) {
+      await window.Excel.run(async context => {
+        this.address = args.address;
+        await context.sync();
+      });
     },
     async requireApprovedTag() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
         const markRange = sheet.getRange("K:K");
+        const protectedRange = sheet.getRanges("A:J, L:Q");
 
         markRange.dataValidation.clear();
+        protectedRange.dataValidation.clear();
 
         let approvedListRule = {
           list: {
@@ -272,39 +262,76 @@ export default {
             source: "y,n,e,z"
           }
         };
+        let protectedListRule = {
+          list: {
+            inCellDropDown: false,
+            source: "protected"
+          }
+        };
         markRange.dataValidation.rule = approvedListRule;
+        protectedRange.dataValidation.rule = protectedListRule;
 
         await context.sync();
       });
     },
-    async protectDataSheet() {
+    async freezeFirstRow() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
-        sheet.load("protection/protected");
+        sheet.freezePanes.freezeRows(1);
 
         await context.sync();
-
-        if (!sheet.protection.protected) {
-          const option = {
-            allowAutoFilter: true,
-            allowFormatRows: true,
-            allowFormatCells: true,
-            allowFormatColumns: true
-          };
-          sheet.protection.protect(option);
-        }
       });
     },
-    async unprotectDataSheet() {
+    async setFilter() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
-        sheet.protection.unprotect();
+        const usedRange = sheet.getUsedRange();
+
+        sheet.autoFilter.apply(usedRange);
+        await context.sync();
+      });
+    },
+    async setRowColorGrid() {
+      await window.Excel.run(async context => {
+        const sheet = context.workbook.worksheets.getItem("data");
+        const range = sheet.getRange("K:K");
+
+        range.format.borders.getItem("InsideHorizontal").style = "Dot";
+        range.format.borders.getItem("InsideVertical").style = "Dot";
+        range.format.borders.getItem("EdgeBottom").style = "Dot";
+        range.format.borders.getItem("EdgeLeft").style = "Dot";
+        range.format.borders.getItem("EdgeRight").style = "Dot";
+        range.format.borders.getItem("EdgeTop").style = "Dot";
+
+        range.format.borders.getItem("InsideHorizontal").weight = "Hairline";
+        range.format.borders.getItem("InsideVertical").weight = "Hairline";
+        range.format.borders.getItem("EdgeBottom").weight = "Hairline";
+        range.format.borders.getItem("EdgeLeft").weight = "Hairline";
+        range.format.borders.getItem("EdgeRight").weight = "Hairline";
+        range.format.borders.getItem("EdgeTop").weight = "Hairline";
+
+        range.format.fill.color = "#F8FAF4";
+        await context.sync();
+      });
+    },
+    /* terminator */
+    async removeEvent() {
+      await window.Excel.run(async context => {
+        this.event.remove();
+
+        await context.sync();
       });
     }
   },
   created() {
-    this.bindX();
-    this.markValidate();
+    this.tryCatch(this.registerEventHandlers);
+    this.tryCatch(this.requireApprovedTag);
+    this.tryCatch(this.freezeFirstRow);
+    this.tryCatch(this.setFilter);
+    this.tryCatch(this.setRowColorGrid);
+  },
+  beforeDestroy() {
+    this.tryCatch(this.removeEvent);
   }
 };
 </script>
