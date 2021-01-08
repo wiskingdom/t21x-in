@@ -68,7 +68,6 @@
     <q-page-container>
       <div id="app">
         <div class="padding">
-          <p>{{ address }}</p>
           <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
             {{ item }}
           </p>
