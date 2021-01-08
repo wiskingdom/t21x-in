@@ -200,7 +200,7 @@ export default {
         console.error(error);
       }
     },
-    async registerEventHandlers() {
+    async registerEventHandler() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
         this.event = sheet.onSelectionChanged.add(
@@ -283,7 +283,7 @@ export default {
       });
     },
     /* terminator */
-    async removeEvent() {
+    async removeEventHandler() {
       await window.Excel.run(async context => {
         this.event.remove();
 
@@ -292,14 +292,14 @@ export default {
     }
   },
   created() {
-    this.tryCatch(this.registerEventHandlers);
+    this.tryCatch(this.registerEventHandler);
     this.tryCatch(this.requireApprovedTag);
     this.tryCatch(this.freezeFirstRow);
     this.tryCatch(this.setFilter);
     this.tryCatch(this.setRowColorGrid);
   },
   beforeDestroy() {
-    this.tryCatch(this.removeEvent);
+    this.tryCatch(this.removeEventHandler);
   }
 };
 </script>
