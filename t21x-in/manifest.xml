@@ -12,7 +12,7 @@
   <Id>c49eb182-9e76-432e-9924-9cbbe4d07bf1</Id>
 
   <!--Version. Updates from the store only get triggered if there is a version change. -->
-  <Version>1.0.0.0</Version>
+  <Version>1.0.0.1</Version>
   <ProviderName>Yeonwoo Kim</ProviderName>
   <DefaultLocale>ko-KR</DefaultLocale>
   <!-- The display name of your add-in. Used on the store and various places of the Office UI such as the add-ins dialog. -->
