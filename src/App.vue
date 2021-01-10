@@ -8,8 +8,8 @@
           :class="markColor"
           ><strong>작업자분류: {{ markKor }}</strong></span
         >
-        <span style="width:140px;display:inline-block;" :class="preMarkColor"
-          >추정분류: {{ preMarkKor }}</span
+        <span style="width:250px;display:inline-block;" :class="preMarkColor"
+          >추정분류: {{ preMarkKor }} ({{ record.PreWhy }})</span
         >
         <q-btn
           class="text-bold text-caption"
@@ -26,6 +26,14 @@
           label="기사검색(본)"
           style="margin-left: 10px"
           @click="externPop('text')"
+        />
+        <q-btn
+          class="text-bold text-caption"
+          color="accent"
+          unelevated
+          label="서식세팅"
+          style="margin-left: 10px"
+          @click="initForm()"
         />
       </q-tabs>
       <q-tabs align="left" class="text-grey-9 padding">
@@ -74,6 +82,14 @@
         </div>
       </div>
     </q-page-container>
+
+    <q-footer bordered class="bg-white text-accent">
+      <div class="padding">
+        <p v-for="(item, index) in lastString" v-bind:key="`l${index}`">
+          {{ item }}
+        </p>
+      </div>
+    </q-footer>
   </q-layout>
 </template>
 
@@ -117,6 +133,16 @@ export default {
     },
     newsPs() {
       return this.record.NewsText ? this.record.NewsText.split(/<LFCR>/) : [];
+    },
+    lastString() {
+      const length = 100;
+      const text = this.record.NewsText;
+      return text.length < length
+        ? [text]
+        : text
+            .slice(0 - length)
+            .replace(/^.+?\s+/, "")
+            .split(/<LFCR>/);
     }
   },
   watch: {
@@ -129,6 +155,12 @@ export default {
     }
   },
   methods: {
+    initForm() {
+      this.tryCatch(this.requireApprovedTag);
+      this.tryCatch(this.setRowColorGrid);
+      this.tryCatch(this.setFilter);
+      this.tryCatch(this.freezeFirstRow);
+    },
     externPop(mode) {
       const linkPre = this.record.SearchLink.match(/^.+query=/)[0];
       const link =
@@ -167,8 +199,9 @@ export default {
           SubHeadLine,
           ByLine,
           NewsText,
-          SearchLink,
-          WordCount
+          PreWhy,
+          WordCount,
+          SearchLink
         ] = range.values[0];
         this.record = {
           ID,
@@ -186,6 +219,7 @@ export default {
           SubHeadLine,
           ByLine,
           NewsText,
+          PreWhy,
           SearchLink,
           WordCount
         };
@@ -292,10 +326,6 @@ export default {
   },
   created() {
     this.tryCatch(this.registerEventHandler);
-    this.tryCatch(this.requireApprovedTag);
-    this.tryCatch(this.freezeFirstRow);
-    this.tryCatch(this.setFilter);
-    this.tryCatch(this.setRowColorGrid);
   },
   beforeDestroy() {
     this.tryCatch(this.removeEventHandler);
