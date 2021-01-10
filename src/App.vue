@@ -15,7 +15,7 @@
           class="text-bold text-caption"
           color="green-8"
           unelevated
-          label="기사검색(제)"
+          label="검색(제)"
           style="margin-left: 10px"
           @click="externPop('headLine')"
         />
@@ -23,18 +23,19 @@
           class="text-bold text-caption"
           color="green-8"
           unelevated
-          label="기사검색(본)"
+          label="검색(본)"
           style="margin-left: 10px"
           @click="externPop('text')"
         />
-        <q-btn
+        <q-btn-dropdown
           class="text-bold text-caption"
           color="accent"
           unelevated
-          label="서식세팅"
+          label="기능"
           style="margin-left: 10px"
-          @click="initForm()"
-        />
+        >
+          <q-item clickable v-close-popup @click="initForm()">서식세팅</q-item>
+        </q-btn-dropdown>
       </q-tabs>
       <q-tabs align="left" class="text-grey-9 padding">
         <q-markup-table flat bordered>
@@ -155,11 +156,11 @@ export default {
     }
   },
   methods: {
-    initForm() {
-      this.tryCatch(this.requireApprovedTag);
-      this.tryCatch(this.setRowColorGrid);
-      this.tryCatch(this.setFilter);
-      this.tryCatch(this.freezeFirstRow);
+    async initForm() {
+      await this.tryCatch(this.setFilter);
+      await this.tryCatch(this.requireApprovedTag);
+      await this.tryCatch(this.setRowColorGrid);
+      await this.tryCatch(this.freezeFirstRow);
     },
     externPop(mode) {
       const linkPre = this.record.SearchLink.match(/^.+query=/)[0];
