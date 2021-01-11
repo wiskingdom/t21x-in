@@ -34,7 +34,12 @@
           label="기능"
           style="margin-left: 10px"
         >
-          <q-item clickable v-close-popup @click="initForm()">서식세팅</q-item>
+          <q-item clickable v-close-popup @click="setFilter()"
+            >모든 필터 풀기</q-item
+          >
+          <q-item clickable v-close-popup @click="initForm()"
+            >초기 서식 세팅</q-item
+          >
         </q-btn-dropdown>
       </q-tabs>
       <q-tabs align="left" class="text-grey-9 padding">
@@ -54,7 +59,7 @@
           <tbody>
             <tr>
               <td class="text-left">{{ record.ID }}</td>
-              <td class="text-left">{{ record.Dup }}</td>
+              <td class="text-left">{{ record.DupID }}</td>
               <td class="text-left">{{ record.DateLine }}</td>
               <td class="text-left">{{ record.ByLine }}</td>
               <td class="text-left">{{ record.PageType }}</td>
@@ -193,8 +198,9 @@ export default {
           SubjectCode,
           T21Class,
           DateLine,
-          PreMark,
           Dup,
+          PreMark,
+          DupID,
           Mark,
           HeadLine,
           SubHeadLine,
@@ -213,8 +219,9 @@ export default {
           SubjectCode,
           T21Class,
           DateLine,
-          PreMark,
           Dup,
+          PreMark,
+          DupID,
           Mark,
           HeadLine,
           SubHeadLine,
@@ -252,8 +259,8 @@ export default {
     async requireApprovedTag() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
-        const markRange = sheet.getRange("K:K");
-        const protectedRange = sheet.getRanges("A:J, L:Q");
+        const markRange = sheet.getRange("L:L");
+        const protectedRange = sheet.getRanges("A:K, M:S");
 
         markRange.dataValidation.clear();
         protectedRange.dataValidation.clear();
@@ -296,7 +303,7 @@ export default {
     async setRowColorGrid() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
-        const range = sheet.getRange("K:K");
+        const range = sheet.getRange("L:L");
 
         range.format.borders.getItem("InsideHorizontal").style = "Dot";
         range.format.borders.getItem("InsideVertical").style = "Dot";
@@ -327,6 +334,7 @@ export default {
   },
   created() {
     this.tryCatch(this.registerEventHandler);
+    this.getValues(this.rowAddress);
   },
   beforeDestroy() {
     this.tryCatch(this.removeEventHandler);
