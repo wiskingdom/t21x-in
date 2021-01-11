@@ -31,14 +31,24 @@
           class="text-bold text-caption"
           color="accent"
           unelevated
-          label="기능"
+          :label="`설정(${newsTypeKor})`"
           style="margin-left: 10px"
         >
-          <q-item clickable v-close-popup @click="setFilter()"
-            >모든 필터 풀기</q-item
+          <q-item flat clickable v-close-popup @click="initSet()"
+            >(0) 서식 설정</q-item
           >
-          <q-item clickable v-close-popup @click="initForm()"
-            >초기 서식 세팅</q-item
+          <q-item clickable v-close-popup @click="dup1Set()"
+            >(1-1) 중복 검토 1</q-item
+          >
+          <q-item clickable v-close-popup @click="dup2Set()"
+            >(1-2) 중복 검토 2</q-item
+          >
+          <q-item clickable v-close-popup @click="eSet()">(2) 사설 검토</q-item>
+          <q-item clickable v-close-popup @click="nSet()"
+            >(3) 비기사 검토</q-item
+          >
+          <q-item clickable v-close-popup @click="ySet()"
+            >(4) 일반기사 검토</q-item
           >
         </q-btn-dropdown>
       </q-tabs>
@@ -80,6 +90,22 @@
     </q-header>
 
     <q-page-container>
+      <q-dialog v-model="alert">
+        <q-card>
+          <q-card-section class="bg-accent text-white">
+            <div class="text-h6">{{ alertContent.title }}</div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            <br />
+            {{ alertContent.message }}
+          </q-card-section>
+
+          <q-card-actions align="right">
+            <q-btn flat label="확인" color="primary" v-close-popup />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
       <div id="app">
         <div class="padding">
           <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
@@ -114,10 +140,19 @@ const markColorMap = {
   d: "text-negative",
   z: "text-amber-10"
 };
+const newsTypeMap = {
+  cho: "조",
+  dong: "동",
+  joong: "중",
+  han: "한"
+};
 export default {
   name: "App",
   data() {
     return {
+      alert: false,
+      alertContent: { title: "", message: "" },
+      newsType: "type",
       event: {},
       address: "A1",
       rowAddress: "1",
@@ -129,13 +164,16 @@ export default {
       return markMap[this.record.PreMark] || "";
     },
     markKor() {
-      return markMap[this.record.Mark] || "미분류";
+      return markMap[this.record.Mark] || "미수정";
     },
     preMarkColor() {
       return markColorMap[this.record.PreMark] || "text-grey-9";
     },
     markColor() {
       return markColorMap[this.record.Mark] || "text-grey-9";
+    },
+    newsTypeKor() {
+      return newsTypeMap[this.newsType] || "오류";
     },
     newsPs() {
       return this.record.NewsText ? this.record.NewsText.split(/<LFCR>/) : [];
@@ -161,11 +199,65 @@ export default {
     }
   },
   methods: {
-    async initForm() {
-      await this.tryCatch(this.setFilter);
+    popAlert({ title, message }) {
+      this.alertContent = { title, message };
+      this.alert = true;
+    },
+    async initSet() {
+      await this.tryCatch(this.filter());
       await this.tryCatch(this.requireApprovedTag);
       await this.tryCatch(this.setRowColorGrid);
       await this.tryCatch(this.freezeFirstRow);
+      await this.tryCatch(this.sort(0));
+      this.popAlert({
+        title: "설정 완료",
+        message: "(0) 서식 설정을 완료하였습니다."
+      });
+    },
+    async dup1Set() {
+      await this.tryCatch(this.filter(8, "dup-1"));
+      await this.tryCatch(this.sort(0));
+      await this.tryCatch(this.sort(10));
+      this.popAlert({
+        title: "설정 완료",
+        message: "(1-1) 중복 유형1 검토 설정을 완료하였습니다."
+      });
+    },
+    async dup2Set() {
+      await this.tryCatch(this.filter(8, "dup-2"));
+      await this.tryCatch(this.sort(0));
+      await this.tryCatch(this.sort(10));
+      this.popAlert({
+        title: "설정 완료",
+        message: "(1-2) 중복 유형2 검토 설정을 완료하였습니다."
+      });
+    },
+    async eSet() {
+      await this.tryCatch(this.filter(8, "no-dup"));
+      await this.tryCatch(this.filter(9, "e", true));
+      await this.tryCatch(this.sort(12));
+      this.popAlert({
+        title: "설정 완료",
+        message: "(2) 사설 검토 설정을 완료하였습니다."
+      });
+    },
+    async nSet() {
+      await this.tryCatch(this.filter(8, "no-dup"));
+      await this.tryCatch(this.filter(9, "n", true));
+      await this.tryCatch(this.sort(12));
+      this.popAlert({
+        title: "설정 완료",
+        message: "(3) 비기사 검토 설정을 완료하였습니다."
+      });
+    },
+    async ySet() {
+      await this.tryCatch(this.filter(8, "no-dup"));
+      await this.tryCatch(this.filter(9, "y", true));
+      await this.tryCatch(this.sort(12));
+      this.popAlert({
+        title: "설정 완료",
+        message: "(4) 일반기사 검토 설정을 완료하였습니다."
+      });
     },
     externPop(mode) {
       const linkPre = this.record.SearchLink.match(/^.+query=/)[0];
@@ -233,28 +325,46 @@ export default {
         };
       });
     },
-    /* initializer */
-    async tryCatch(callback) {
-      try {
-        await callback();
-      } catch (error) {
-        console.error(error);
-      }
+    /* setting actions */
+
+    filter(colNum, value, notClear) {
+      return async function() {
+        await window.Excel.run(async context => {
+          const sheet = context.workbook.worksheets.getItem("data");
+          const usedRange = sheet.getUsedRange();
+          notClear || (await sheet.autoFilter.clearCriteria());
+          await sheet.autoFilter.apply(usedRange, colNum, {
+            values: [value],
+            filterOn: window.Excel.FilterOn.values
+          });
+          await context.sync();
+        });
+      };
     },
-    async registerEventHandler() {
-      await window.Excel.run(async context => {
-        const sheet = context.workbook.worksheets.getItem("data");
-        this.event = sheet.onSelectionChanged.add(
-          this.onWorksheetSelectionChange
-        );
-        await context.sync();
-      });
-    },
-    async onWorksheetSelectionChange(args) {
-      await window.Excel.run(async context => {
-        this.address = args.address;
-        await context.sync();
-      });
+
+    sort(colNum) {
+      return async function() {
+        await window.Excel.run(async context => {
+          const sheet = context.workbook.worksheets.getItem("data");
+          const usedRange = sheet.getUsedRange();
+          const usedAddress = usedRange.load("address");
+          await context.sync();
+          const dataRange = sheet.getRange(
+            usedAddress.address.replace(/A1/, "A2")
+          );
+
+          // sort the table by the "Amount" column
+          const sortFields = [
+            {
+              key: colNum,
+              ascending: true
+            }
+          ];
+          dataRange.sort.apply(sortFields);
+
+          await context.sync();
+        });
+      };
     },
     async requireApprovedTag() {
       await window.Excel.run(async context => {
@@ -291,15 +401,7 @@ export default {
         await context.sync();
       });
     },
-    async setFilter() {
-      await window.Excel.run(async context => {
-        const sheet = context.workbook.worksheets.getItem("data");
-        const usedRange = sheet.getUsedRange();
 
-        sheet.autoFilter.apply(usedRange);
-        await context.sync();
-      });
-    },
     async setRowColorGrid() {
       await window.Excel.run(async context => {
         const sheet = context.workbook.worksheets.getItem("data");
@@ -323,6 +425,36 @@ export default {
         await context.sync();
       });
     },
+    /* initializer */
+    async tryCatch(callback) {
+      try {
+        await callback();
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async registerEventHandler() {
+      await window.Excel.run(async context => {
+        const sheet = context.workbook.worksheets.getItem("data");
+        this.event = sheet.onSelectionChanged.add(
+          this.onWorksheetSelectionChange
+        );
+        await context.sync();
+      });
+    },
+    async onWorksheetSelectionChange(args) {
+      await window.Excel.run(async context => {
+        this.address = args.address;
+        await context.sync();
+      });
+    },
+    async getNewsType() {
+      await window.Excel.run(async context => {
+        const workbookName = context.workbook.load("name");
+        await context.sync();
+        this.newsType = workbookName.name.split(/\d+/)[0];
+      });
+    },
     /* terminator */
     async removeEventHandler() {
       await window.Excel.run(async context => {
@@ -334,6 +466,7 @@ export default {
   },
   created() {
     this.tryCatch(this.registerEventHandler);
+    this.tryCatch(this.getNewsType);
     this.getValues(this.rowAddress);
   },
   beforeDestroy() {
