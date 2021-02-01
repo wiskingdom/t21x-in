@@ -260,10 +260,10 @@ export default {
       });
     },
     externPop(mode) {
-      const linkPre = this.record.SearchLink.match(/^.+query=/)[0];
+      const linkPre = this.record.SearchLink.match(/^.+(query|keyword)=/)[0];
       const link =
         mode === "headLine"
-          ? linkPre + this.record.HeadLine.replace(/[^가-힣\w]+/g, " ")
+          ? linkPre + this.record.HeadLine.replace(/[^가-힣]+/g, " ")
           : this.record.SearchLink.replace(/CRLF|LFCR/g, "");
       const linkUri = encodeURI(link);
       window.open(linkUri, "popup");
