@@ -263,7 +263,7 @@ export default {
       const linkPre = this.record.SearchLink.match(/^.+(query|keyword)=/)[0];
       const link =
         mode === "headLine"
-          ? linkPre + this.record.HeadLine.replace(/[^가-힣]+/g, " ")
+          ? linkPre + this.record.HeadLine.replace(/[^가-힣\w]+/g, " ")
           : this.record.SearchLink.replace(/CRLF|LFCR/g, "");
       const linkUri = encodeURI(link);
       window.open(linkUri, "popup");
