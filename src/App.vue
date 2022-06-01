@@ -107,11 +107,7 @@
         </q-card>
       </q-dialog>
       <div id="app">
-        <div class="padding">
-          <p v-for="(item, index) in newsPs" v-bind:key="`p${index}`">
-            {{ item }}
-          </p>
-        </div>
+        <div class="padding" v-html="newsHTML"></div>
       </div>
     </q-page-container>
 
@@ -175,9 +171,14 @@ export default {
     newsTypeKor() {
       return newsTypeMap[this.newsType] || "오류";
     },
+    newsHTML() {
+      return this.record.NewsText.replace(/<LFCR>/g, "<br><br>");
+    },
+    /*
     newsPs() {
       return this.record.NewsText ? this.record.NewsText.split(/<LFCR>/) : [];
     },
+    */
     lastString() {
       const length = 100;
       const text = this.record.NewsText;
